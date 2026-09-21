@@ -1,0 +1,49 @@
+========================================================================
+ 开发过程实录 —— 客服回复幻觉检测工具
+ Agent: opencode (CLI)  |  Shell: PowerShell  |  工具链: Python 3.12 venv
+ 日期: 2026-09-21
+========================================================================
+
+[1] 环境探测
+PS> Get-ChildItem "D:\Virtual environment\agent_env\python.exe"
+PS> & "D:\Virtual environment\agent_env\python.exe" --version
+    Python 3.12.13
+
+[2] 可用库探测（pip list 片段）
+    pandas 3.0.5 / pillow 12.3.0 / openai 2.44.0 / jieba 0.42.1
+    rapidfuzz 3.14.5 / langchain 1.4.0 / ragas 0.4.3 / chromadb / sentence-transformers
+
+[3] 搭建工程目录并拷贝数据
+PS> New-Item data, src, results, screenshots, logs
+PS> Copy-Item task4_replies.json -> data/task4_replies.json
+PS> Copy-Item task4_ground_truth.json -> data/task4_ground_truth.json
+
+[4] 编码：src/categories.py —— 自建分类体系（7类 + 严重度 + ground_truth 映射）
+     代码量：约 80 行
+
+[5] 编码：src/detector.py —— 检测工具（mock 规则引擎 + 可选 --llm real API）
+     检测管线：KB能力门 -> 子句切分 -> 数值/实体抽取 -> 逐项比对 -> 汇总
+     PS> python src\detector.py
+     首次运行：检出 17 / 20（h20 信息遗漏漏检）
+
+[6] 归因与修复
+     分析：h20 回复含"不偏大不偏小"，其子串"偏大"被极性判断误读为"回复持肯定立场"，
+     导致 INFO_OMISSION 规则被短路。
+     修复：改用 (?<!不)偏大 前向否定断言，区分"不偏大"(否定) 与"偏大半码"(肯定)。
+     PS> python src\detector.py    ->  检出 18 / 20（h12/h16 负样本无误报）
+
+[7] 编码：src/evaluate.py —— 对照 ground_truth 的检出率评估
+     PS> python src\evaluate.py
+     TP=18 FP=0 FN=0 TN=2
+     Precision=1.0000  Recall=1.0000  F1=1.0000  Accuracy=1.0000
+     幻觉子类类型级对齐：18/18 = 100.00%
+
+[8] 校验 --llm 真实 API 开关（无 key 自动回退 mock）
+     PS> python src\detector.py --llm
+     [llm] 未提供 API key，回退 mock
+
+[9] 产物生成
+     PS> python tools\make_screenshots.py   ->  screenshots/dev_process.png
+                                                 screenshots/detection_results.png
+
+========================================================================
