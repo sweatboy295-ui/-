@@ -1,0 +1,16 @@
+{
+  "total": 20,
+  "ground_truth_hallucinations": 18,
+  "tp": 17,
+  "fp": 0,
+  "fn": 1,
+  "tn": 2,
+  "precision": 1.0,
+  "recall_detection_rate": 0.9444444444444444,
+  "f1": 0.9714285714285714,
+  "accuracy": 0.95,
+  "false_negative_ids": [
+    "h20"
+  ],
+  "false_positive_ids": []
+}
